@@ -284,7 +284,7 @@
         const SUPABASE_URL = 'https://wbefrliejekbipxuvckn.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_HGOihe5zJfYg4_s8d6cMbQ_Awpi4PLz';
         const MAX_GUESTS = 50;
-        const DEADLINE = new Date('2024-12-06T00:00:00').getTime(); // 6 dicembre 00:00
+        const DEADLINE = new Date('2024-12-06T00:00:00').getTime();
 
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -310,13 +310,13 @@
             document.getElementById('countdown').textContent = 
                 `${days}g ${hours}h ${minutes}m ${seconds}s`;
 
-            if (distance < 3600000) { // < 1 ora
+            if (distance < 3600000) {
                 document.querySelector('.timer-box').style.background = '#f8d7da';
                 document.querySelector('.timer-box').style.borderColor = '#f5c6cb';
             }
         }
 
-        // ===== AGGIORNA CONTATORI =====
+        // ===== AGGIORNA CONTATORI (CON REAL-TIME) =====
         async function updateCounters() {
             const { count, error } = await supabase
                 .from('guests')
@@ -331,10 +331,31 @@
                     document.getElementById('message').textContent = '🚫 Posti esauriti!';
                     document.getElementById('message').className = 'message warning';
                     document.getElementById('message').style.display = 'block';
-                } else {
+                } else if (document.getElementById('qrContainer').style.display === 'none') {
                     document.getElementById('signupForm').style.display = 'block';
                 }
             }
+        }
+
+        // ===== ASCOLTA CAMBIAMENTI IN TEMPO REALE =====
+        function setupRealtimeListener() {
+            const subscription = supabase
+                .channel('guests_changes')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'guests'
+                    },
+                    (payload) => {
+                        console.log('Cambio rilevato:', payload);
+                        updateCounters();
+                    }
+                )
+                .subscribe((status) => {
+                    console.log('Stato della sottoscrizione:', status);
+                });
         }
 
         // ===== GENERA TOKEN UNIVOCO =====
@@ -354,13 +375,11 @@
                 return;
             }
 
-            // Controllo deadline
             if (new Date().getTime() >= DEADLINE) {
                 showMessage('❌ Iscrizioni scadute', 'error');
                 return;
             }
 
-            // Controllo posti
             const { count, error: countError } = await supabase
                 .from('guests')
                 .select('*', { count: 'exact', head: true });
@@ -370,14 +389,11 @@
                 return;
             }
 
-            // Mostra loading
             document.getElementById('loading').style.display = 'block';
             document.getElementById('submitBtn').disabled = true;
 
-            // Genera token
             const qrToken = generateToken();
 
-            // Salva in Supabase
             const { error } = await supabase.from('guests').insert({
                 first_name: firstName,
                 last_name: lastName,
@@ -391,18 +407,13 @@
                 return;
             }
 
-            // Genera QR
-            const qrUrl = `https://your-bar-domain.com/?token=${qrToken}`; // CAMBIA IL DOMINIO
+            const qrUrl = `${window.location.origin}/?token=${qrToken}`;
             generateQRCode(qrUrl, firstName, lastName);
 
-            // Nascondi form
             document.getElementById('signupForm').style.display = 'none';
             document.getElementById('loading').style.display = 'none';
-
-            // Mostra QR
             document.getElementById('qrContainer').style.display = 'block';
 
-            // Aggiorna contatori
             updateCounters();
         });
 
@@ -436,8 +447,8 @@
         // ===== INIT =====
         updateCountdown();
         updateCounters();
+        setupRealtimeListener();
         setInterval(updateCountdown, 1000);
-        setInterval(updateCounters, 5000);
     </script>
 </body>
 </html>
