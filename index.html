@@ -185,12 +185,18 @@
             font-size: 18px;
         }
 
-        #qrCode {
-            border: 2px solid #667eea;
-            border-radius: 8px;
+        .qr-wrapper {
+            display: inline-block;
             padding: 10px;
             background: white;
-            display: inline-block;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .qr-wrapper img {
+            display: block;
+            max-width: 250px;
+            height: auto;
         }
 
         .ticket-info {
@@ -298,7 +304,9 @@
 
         <div class="qr-container" id="qrContainer">
             <h2>✅ Iscrizione confermata!</h2>
-            <div id="qrCode"></div>
+            <div class="qr-wrapper">
+                <img id="qrCode" alt="QR Code">
+            </div>
             <div class="ticket-info">
                 <p>Nome: <strong id="ticketName"></strong></p>
                 <p>Cognome: <strong id="ticketSurname"></strong></p>
@@ -313,8 +321,8 @@
 
     <!-- Supabase JS -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- Libreria QR -->
-    <script src="https://unpkg.com/easyqrcodejs@4.4.13/dist/easy.qrcode.min.js"></script>
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <script>
         // ===== CONFIGURAZIONE =====
@@ -371,6 +379,23 @@
             return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
         }
 
+        // ===== GENERA QR CODE =====
+        function generateQRCode(data, firstName, lastName) {
+            console.log('Generando QR per:', data);
+            
+            const qrImg = document.getElementById('qrCode');
+            
+            // Usa API pubblica per generare QR come immagine
+            const encodedURL = encodeURIComponent(data);
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodedURL}`;
+            
+            qrImg.src = qrUrl;
+            qrImg.alt = `QR Code - ${firstName} ${lastName}`;
+            
+            document.getElementById('ticketName').textContent = firstName;
+            document.getElementById('ticketSurname').textContent = lastName;
+        }
+
         // ===== SUBMIT FORM =====
         document.getElementById('signupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -410,6 +435,8 @@
                     return;
                 }
 
+                console.log('✅ Registrazione OK:', data);
+
                 const qrUrl = `${window.location.origin}/?token=${qrToken}`;
                 generateQRCode(qrUrl, firstName, lastName);
 
@@ -425,25 +452,6 @@
                 document.getElementById('submitBtn').disabled = false;
             }
         });
-
-        // ===== GENERA QR CODE =====
-        function generateQRCode(data, firstName, lastName) {
-            const container = document.getElementById('qrCode');
-            container.innerHTML = '';
-
-            new QRCode({
-                text: data,
-                width: 250,
-                height: 250,
-                container: 'qrCode',
-                correctLevel: 'H',
-                background: '#ffffff',
-                foreground: '#000000'
-            });
-
-            document.getElementById('ticketName').textContent = firstName;
-            document.getElementById('ticketSurname').textContent = lastName;
-        }
 
         // ===== MOSTRA MESSAGGIO =====
         function showMessage(text, type) {
