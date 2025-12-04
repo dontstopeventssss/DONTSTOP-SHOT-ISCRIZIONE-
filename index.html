@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iscrizione Shot Omaggio</title>
+    <title>Shot Omaggio - Iscrizione</title>
     <style>
         * {
             margin: 0;
@@ -77,6 +77,27 @@
             font-family: monospace;
         }
 
+        .counter {
+            background: #1a2a3a;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 1px solid #333;
+        }
+
+        .counter-label {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+
+        .counter-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
         .form-group {
             margin-bottom: 20px;
         }
@@ -117,6 +138,7 @@
             font-weight: 600;
             cursor: pointer;
             transition: background 0.3s;
+            margin-top: 10px;
         }
 
         button:hover:not(:disabled) {
@@ -148,13 +170,6 @@
             background: #3b0d0d;
             color: #ff6b6b;
             border: 1px solid #ff6b6b;
-            display: block;
-        }
-
-        .message.warning {
-            background: #2a2a0a;
-            color: #ffc107;
-            border: 1px solid #ffc107;
             display: block;
         }
 
@@ -211,32 +226,12 @@
             line-height: 1.5;
         }
 
-        .counter {
-            background: #1a2a3a;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            text-align: center;
-            border: 1px solid #333;
-        }
-
-        .counter-label {
-            font-size: 12px;
-            color: #aaa;
-            margin-bottom: 5px;
-        }
-
-        .counter-value {
-            font-size: 28px;
-            font-weight: bold;
-            color: #667eea;
-        }
-
         .loading {
             display: none;
             text-align: center;
             color: #667eea;
             font-weight: 600;
+            margin-top: 10px;
         }
 
         .spinner {
@@ -254,6 +249,10 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        #signupForm {
+            display: block !important;
         }
     </style>
 </head>
@@ -273,26 +272,26 @@
 
         <div class="counter">
             <div class="counter-label">Posti disponibili</div>
-            <div class="counter-value"><span id="availableSlots">50</span>/50</div>
+            <div class="counter-value"><span id="availableSlots">-</span>/50</div>
         </div>
 
-        <form id="signupForm" style="display: none;">
+        <form id="signupForm">
             <div class="form-group">
-                <label for="firstName">Nome</label>
-                <input type="text" id="firstName" required placeholder="es. Marco">
+                <label for="firstName">Nome *</label>
+                <input type="text" id="firstName" required placeholder="Es. Marco">
             </div>
 
             <div class="form-group">
-                <label for="lastName">Cognome</label>
-                <input type="text" id="lastName" required placeholder="es. Rossi">
+                <label for="lastName">Cognome *</label>
+                <input type="text" id="lastName" required placeholder="Es. Rossi">
             </div>
+
+            <button type="submit" id="submitBtn">Genera il tuo QR</button>
 
             <div class="loading" id="loading">
                 <div class="spinner"></div>
                 Creando il tuo QR...
             </div>
-
-            <button type="submit" id="submitBtn" style="display: block;">Genera il tuo QR</button>
         </form>
 
         <div class="message" id="message"></div>
@@ -334,9 +333,7 @@
             if (distance < 0) {
                 document.getElementById('countdown').textContent = '⏰ Iscrizioni chiuse';
                 document.getElementById('signupForm').style.display = 'none';
-                document.getElementById('message').textContent = '❌ Le iscrizioni sono chiuse.';
-                document.getElementById('message').className = 'message error';
-                document.getElementById('message').style.display = 'block';
+                showMessage('❌ Le iscrizioni sono chiuse', 'error');
                 return;
             }
 
@@ -347,61 +344,31 @@
 
             document.getElementById('countdown').textContent = 
                 `${days}g ${hours}h ${minutes}m ${seconds}s`;
-
-            if (distance < 3600000) {
-                document.querySelector('.timer-box').style.background = '#3a1a0a';
-                document.querySelector('.timer-box').style.borderColor = '#ff6b6b';
-            }
         }
 
-        // ===== AGGIORNA CONTATORI (CON REAL-TIME) ====
-async function updateCounters() {
-    const { count, error } = await supabase
-        .from('guests')
-        .select('*', { count: 'exact', head: true });
+        // ===== AGGIORNA CONTATORI =====
+        async function updateCounters() {
+            try {
+                const { count, error } = await supabase
+                    .from('guests')
+                    .select('*', { count: 'exact', head: true });
 
-    console.log('Count:', count, 'Error:', error); // DEBUG
-    
-    if (!error) {
-        const available = MAX_GUESTS - (count || 0);
-        console.log('Available:', available); // DEBUG
-        document.getElementById('availableSlots').textContent = Math.max(0, available);
-
-                if (available <= 0) {
-                    document.getElementById('signupForm').style.display = 'none';
-                    document.getElementById('message').textContent = '🚫 Posti esauriti!';
-                    document.getElementById('message').className = 'message warning';
-                    document.getElementById('message').style.display = 'block';
-                } else if (document.getElementById('qrContainer').style.display === 'none') {
-                    document.getElementById('signupForm').style.display = 'block';
+                if (error) {
+                    console.error('Errore:', error);
+                    document.getElementById('availableSlots').textContent = '?';
+                } else {
+                    const available = MAX_GUESTS - (count || 0);
+                    document.getElementById('availableSlots').textContent = Math.max(0, available);
                 }
+            } catch (err) {
+                console.error('Errore connessione:', err);
+                document.getElementById('availableSlots').textContent = '?';
             }
-        }
-
-        // ===== ASCOLTA CAMBIAMENTI IN TEMPO REALE =====
-        function setupRealtimeListener() {
-            const subscription = supabase
-                .channel('guests_changes')
-                .on(
-                    'postgres_changes',
-                    {
-                        event: '*',
-                        schema: 'public',
-                        table: 'guests'
-                    },
-                    (payload) => {
-                        console.log('Cambio rilevato:', payload);
-                        updateCounters();
-                    }
-                )
-                .subscribe((status) => {
-                    console.log('Stato della sottoscrizione:', status);
-                });
         }
 
         // ===== GENERA TOKEN UNIVOCO =====
         function generateToken() {
-            return Math.random().toString(36).substring(2, 10);
+            return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
         }
 
         // ===== SUBMIT FORM =====
@@ -411,8 +378,10 @@ async function updateCounters() {
             const firstName = document.getElementById('firstName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();
 
+            console.log('Invio:', firstName, lastName);
+
             if (!firstName || !lastName) {
-                showMessage('❌ Compila tutti i campi', 'error');
+                showMessage('❌ Compila nome e cognome', 'error');
                 return;
             }
 
@@ -421,44 +390,43 @@ async function updateCounters() {
                 return;
             }
 
-            const { count, error: countError } = await supabase
-                .from('guests')
-                .select('*', { count: 'exact', head: true });
-
-            if (countError || (count || 0) >= MAX_GUESTS) {
-                showMessage('🚫 Posti esauriti!', 'warning');
-                return;
-            }
-
             document.getElementById('loading').style.display = 'block';
             document.getElementById('submitBtn').disabled = true;
 
-            const qrToken = generateToken();
+            try {
+                const qrToken = generateToken();
 
-            const { error } = await supabase.from('guests').insert({
-                first_name: firstName,
-                last_name: lastName,
-                qr_token: qrToken
-            });
+                const { data, error } = await supabase.from('guests').insert({
+                    first_name: firstName,
+                    last_name: lastName,
+                    qr_token: qrToken
+                }).select();
 
-            if (error) {
-                showMessage('❌ Errore nell\'iscrizione: ' + error.message, 'error');
+                if (error) {
+                    console.error('Errore insert:', error);
+                    showMessage('❌ Errore: ' + error.message, 'error');
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('submitBtn').disabled = false;
+                    return;
+                }
+
+                const qrUrl = `${window.location.origin}/?token=${qrToken}`;
+                generateQRCode(qrUrl, firstName, lastName);
+
+                document.getElementById('signupForm').style.display = 'none';
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('qrContainer').style.display = 'block';
+
+                updateCounters();
+            } catch (err) {
+                console.error('Errore:', err);
+                showMessage('❌ Errore: ' + err.message, 'error');
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('submitBtn').disabled = false;
-                return;
             }
-
-            const qrUrl = `${window.location.origin}/?token=${qrToken}`;
-            generateQRCode(qrUrl, firstName, lastName);
-
-            document.getElementById('signupForm').style.display = 'none';
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('qrContainer').style.display = 'block';
-
-            updateCounters();
         });
 
-        // ===== GENERA IMMAGINE QR =====
+        // ===== GENERA QR CODE =====
         function generateQRCode(data, firstName, lastName) {
             const container = document.getElementById('qrCode');
             container.innerHTML = '';
@@ -488,8 +456,8 @@ async function updateCounters() {
         // ===== INIT =====
         updateCountdown();
         updateCounters();
-        setupRealtimeListener();
         setInterval(updateCountdown, 1000);
+        setInterval(updateCounters, 5000);
     </script>
 </body>
 </html>
