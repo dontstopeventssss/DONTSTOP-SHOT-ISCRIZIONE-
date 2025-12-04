@@ -354,15 +354,18 @@
             }
         }
 
-        // ===== AGGIORNA CONTATORI (CON REAL-TIME) =====
-        async function updateCounters() {
-            const { count, error } = await supabase
-                .from('guests')
-                .select('*', { count: 'exact', head: true });
+        // ===== AGGIORNA CONTATORI (CON REAL-TIME) ====
+async function updateCounters() {
+    const { count, error } = await supabase
+        .from('guests')
+        .select('*', { count: 'exact', head: true });
 
-            if (!error) {
-                const available = MAX_GUESTS - (count || 0);
-                document.getElementById('availableSlots').textContent = Math.max(0, available);
+    console.log('Count:', count, 'Error:', error); // DEBUG
+    
+    if (!error) {
+        const available = MAX_GUESTS - (count || 0);
+        console.log('Available:', available); // DEBUG
+        document.getElementById('availableSlots').textContent = Math.max(0, available);
 
                 if (available <= 0) {
                     document.getElementById('signupForm').style.display = 'none';
