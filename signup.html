@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iscrizione Shot Omaggio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .timer-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .timer-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .timer {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff6b6b;
+            font-family: monospace;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover:not(:disabled) {
+            background: #5568d3;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .message.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            display: block;
+        }
+
+        .qr-container {
+            margin-top: 30px;
+            text-align: center;
+            display: none;
+        }
+
+        .qr-container h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        #qrCode {
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 10px;
+            background: white;
+        }
+
+        .ticket-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .ticket-info p {
+            color: #666;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        .ticket-info strong {
+            color: #333;
+            font-size: 16px;
+        }
+
+        .counter {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .counter-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .counter-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍺 Shot Omaggio</h1>
+        <p class="subtitle">Iscriviti per ricevere il tuo shot omaggio</p>
+
+        <div class="timer-box">
+            <div class="timer-label">Tempo rimasto per iscriverti:</div>
+            <div class="timer" id="countdown">Caricamento...</div>
+        </div>
+
+        <div class="counter">
+            <div class="counter-label">Posti disponibili</div>
+            <div class="counter-value"><span id="availableSlots">50</span>/50</div>
+        </div>
+
+        <form id="signupForm" style="display: none;">
+            <div class="form-group">
+                <label for="firstName">Nome</label>
+                <input type="text" id="firstName" required placeholder="es. Marco">
+            </div>
+
+            <div class="form-group">
+                <label for="lastName">Cognome</label>
+                <input type="text" id="lastName" required placeholder="es. Rossi">
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                Creando il tuo QR...
+            </div>
+
+            <button type="submit" id="submitBtn" style="display: block;">Genera il tuo QR</button>
+        </form>
+
+        <div class="message" id="message"></div>
+
+        <div class="qr-container" id="qrContainer">
+            <h2>✅ Iscrizione confermata!</h2>
+            <div id="qrCode"></div>
+            <div class="ticket-info">
+                <p>Nome: <strong id="ticketName"></strong></p>
+                <p>Cognome: <strong id="ticketSurname"></strong></p>
+                <p style="margin-top: 15px; font-size: 12px; color: #999;">Presenta questo QR al bancone per ricevere il tuo shot omaggio</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase JS -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- Libreria QR -->
+    <script src="https://unpkg.com/easyqrcodejs@4.4.13/dist/easy.qrcode.min.js"></script>
+
+    <script>
+        // ===== CONFIGURAZIONE =====
+        const SUPABASE_URL = 'https://wbefrliejekbipxuvckn.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_HGOihe5zJfYg4_s8d6cMbQ_Awpi4PLz';
+        const MAX_GUESTS = 50;
+        const DEADLINE = new Date('2024-12-06T00:00:00').getTime(); // 6 dicembre 00:00
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ===== COUNTDOWN =====
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = DEADLINE - now;
+
+            if (distance < 0) {
+                document.getElementById('countdown').textContent = '⏰ Iscrizioni chiuse';
+                document.getElementById('signupForm').style.display = 'none';
+                document.getElementById('message').textContent = '❌ Le iscrizioni sono chiuse.';
+                document.getElementById('message').className = 'message error';
+                document.getElementById('message').style.display = 'block';
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById('countdown').textContent = 
+                `${days}g ${hours}h ${minutes}m ${seconds}s`;
+
+            if (distance < 3600000) { // < 1 ora
+                document.querySelector('.timer-box').style.background = '#f8d7da';
+                document.querySelector('.timer-box').style.borderColor = '#f5c6cb';
+            }
+        }
+
+        // ===== AGGIORNA CONTATORI =====
+        async function updateCounters() {
+            const { count, error } = await supabase
+                .from('guests')
+                .select('*', { count: 'exact', head: true });
+
+            if (!error) {
+                const available = MAX_GUESTS - (count || 0);
+                document.getElementById('availableSlots').textContent = Math.max(0, available);
+
+                if (available <= 0) {
+                    document.getElementById('signupForm').style.display = 'none';
+                    document.getElementById('message').textContent = '🚫 Posti esauriti!';
+                    document.getElementById('message').className = 'message warning';
+                    document.getElementById('message').style.display = 'block';
+                } else {
+                    document.getElementById('signupForm').style.display = 'block';
+                }
+            }
+        }
+
+        // ===== GENERA TOKEN UNIVOCO =====
+        function generateToken() {
+            return Math.random().toString(36).substring(2, 10);
+        }
+
+        // ===== SUBMIT FORM =====
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+
+            if (!firstName || !lastName) {
+                showMessage('❌ Compila tutti i campi', 'error');
+                return;
+            }
+
+            // Controllo deadline
+            if (new Date().getTime() >= DEADLINE) {
+                showMessage('❌ Iscrizioni scadute', 'error');
+                return;
+            }
+
+            // Controllo posti
+            const { count, error: countError } = await supabase
+                .from('guests')
+                .select('*', { count: 'exact', head: true });
+
+            if (countError || (count || 0) >= MAX_GUESTS) {
+                showMessage('🚫 Posti esauriti!', 'warning');
+                return;
+            }
+
+            // Mostra loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('submitBtn').disabled = true;
+
+            // Genera token
+            const qrToken = generateToken();
+
+            // Salva in Supabase
+            const { error } = await supabase.from('guests').insert({
+                first_name: firstName,
+                last_name: lastName,
+                qr_token: qrToken
+            });
+
+            if (error) {
+                showMessage('❌ Errore nell\'iscrizione: ' + error.message, 'error');
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('submitBtn').disabled = false;
+                return;
+            }
+
+            // Genera QR
+            const qrUrl = `https://your-bar-domain.com/?token=${qrToken}`; // CAMBIA IL DOMINIO
+            generateQRCode(qrUrl, firstName, lastName);
+
+            // Nascondi form
+            document.getElementById('signupForm').style.display = 'none';
+            document.getElementById('loading').style.display = 'none';
+
+            // Mostra QR
+            document.getElementById('qrContainer').style.display = 'block';
+
+            // Aggiorna contatori
+            updateCounters();
+        });
+
+        // ===== GENERA IMMAGINE QR =====
+        function generateQRCode(data, firstName, lastName) {
+            const container = document.getElementById('qrCode');
+            container.innerHTML = '';
+
+            new QRCode({
+                text: data,
+                width: 250,
+                height: 250,
+                container: 'qrCode',
+                correctLevel: 'H',
+                background: '#ffffff',
+                foreground: '#000000'
+            });
+
+            document.getElementById('ticketName').textContent = firstName;
+            document.getElementById('ticketSurname').textContent = lastName;
+        }
+
+        // ===== MOSTRA MESSAGGIO =====
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+            messageEl.style.display = 'block';
+        }
+
+        // ===== INIT =====
+        updateCountdown();
+        updateCounters();
+        setInterval(updateCountdown, 1000);
+        setInterval(updateCounters, 5000);
+    </script>
+</body>
+</html>
